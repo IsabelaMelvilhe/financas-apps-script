@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-iYQeCzEYFbKjA/T2uDLTpkwGzCiq6soy8tYaI1GyVh/UjpbCx/TYkiZhlZB6+fzT" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100vh;
+      background-color: #4158D0;
+      background-image: linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%);
+    }
+    .oculto {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container pt-5">
+    <div class="shadow rounded bg-light p-3  text-center">
+      <div class="row">
+        <h3>Registro de Transações</h3>
+      </div>
+
+      <div class="btn-group m-3" role="group" aria-label="Tipo da transação">
+        <input type="radio" class="btn-check" name="tipo" id="debito" autocomplete="off">
+        <label class="btn btn-outline-primary" for="debito">Débito</label>
+
+        <input type="radio" class="btn-check" name="tipo" id="credito" autocomplete="off">
+        <label class="btn btn-outline-primary" for="credito">Crédito</label>
+
+        <input type="radio" class="btn-check" name="tipo" id="recebimento" autocomplete="off">
+        <label class="btn btn-outline-primary" for="recebimento">Recebimento</label>
+      </div>
+
+      <form class="form text-start">
+
+        <div class="row mb-3">
+          <div class="col-md-2">
+            <label for="data" class="form-label">Data da Transação<strong class="text-danger">*</strong></label>
+            <input type="date" class="form-control" id="data" required>
+          </div>
+
+          <div class="col-md-5">
+            <label for="conta" class="form-label">
+              <span>Forma de Pagamento</span>
+              <strong class="text-danger">*</strong>
+            </label>
+            <select class="form-select" id="conta">
+              <option selected disabled>Selecione uma opção</option>
+            </select>
+          </div>
+
+          <div class="col-md-5">
+            <label for="categoria" class="form-label">Categoria<strong class="text-danger">*</strong></label>
+            <select class="form-select" id="categoria">
+              <option selected disabled>Selecione uma opção</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-6 oculto">
+            <label for="contaFixa" class="form-label">Conta Fixa<strong class="text-danger">*</strong></label>
+            <select class="form-select" id="contaFixa">
+              <option selected disabled>Selecione uma opção</option>
+            </select>
+          </div>
+          <div class="col-md-12">
+            <label for="valor" class="form-label">
+              <span>Valor (R$)</span>
+              <strong class="text-danger">*</strong>
+            </label>
+            <input type="number" class="form-control" id="valor" placeholder="Digite o valor da transação" required step="0.01">
+            <div class="form-text">Separe as casas decimais por ponto.</div>
+          </div>
+          <div class="col-md-3 parcelas oculto">
+            <label for="parcelaAtual" class="form-label">Parcela atual<strong class="text-danger">*</strong></label>
+            <input type="number" class="form-control" id="parcelaAtual" placeholder="Parcela atual" value="1" required>
+          </div>
+          <div class="col-md-3 parcelas oculto">
+            <label for="totalParcelas" class="form-label">Total de parcelas<strong class="text-danger">*</strong></label>
+            <input type="number" class="form-control" id="totalParcelas" placeholder="Total de parcelas" value="1" required>
+          </div>
+        </div>
+
+        <div class="row mb-3">
+          <div class="col-md-12">
+            <label for="detalhes" class="form-label">Detalhes<strong class="text-danger">*</strong></label>
+            <textarea class="form-control" id="detalhes" rows="2" placeholder="Digite detalhes da transação" required></textarea>
+          </div>
+        </div>
+
+        <div class="row mb-3 text-center">
+          <div>
+            <button type="submit" class="btn btn-success">Registrar Transação</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-u1OknCvxWvY5kfmNBILK2hRnQC3Pr17a+RTT6rIHI7NnikvbZlHgTPOOmMi466C8" crossorigin="anonymous">
+  </script>
+
+  <script>
+
+    //Função para executar lógica ao mudar o tipo da transação
+    document.querySelectorAll("input[name='tipo']").forEach(input => {
+      //Adicionando um event listener
+      input.addEventListener("click", event => {
+        //Busca os dados desse tipo de transação
+        console.log(event.target.id)
+        google.script.run.withSuccessHandler(listas).getDados(event.target.id)
+
+        //Controla o texto do campo conta e valor
+        let labelConta = document.querySelector('label[for="conta"] span')
+        if (event.target.id == "recebimento") labelConta.textContent = 'Recebeu onde?'
+        else labelConta.textContent = 'Forma de Pagamento'
+
+        let labelValor = document.querySelector('label[for="valor"] span')
+        labelValor.textContent = "Valor (R$)"
+        
+        let valor = document.querySelector("#valor")
+        let parcelas = document.querySelectorAll(".parcelas")
+        let contaFixa = document.querySelector("#contaFixa")
+        
+        //Identifica se é um transação de crédito para exibir os campos de parcelas e alterar a label do campo valor
+        if (event.target.id == "credito") {
+          contaFixa.parentElement.classList.add("oculto")
+          parcelas.forEach(parcela => parcela.classList.remove("oculto"))
+          valor.parentElement.classList.remove("col-md-12")
+          valor.parentElement.classList.add("col-md-6")
+          labelValor.textContent = "Valor da Parcela (R$)"
+        }
+        else {
+          parcelas.forEach(parcela => parcela.classList.add("oculto"))
+          valor.parentElement.classList.remove("col-md-6")
+          valor.parentElement.classList.add("col-md-12")
+        }
+      })
+    }) 
+
+    //Variavel para armazenar as formas de pagamento encntradas na planilha
+    var formasPgEncontradas = [];
+
+    //Função para adicionar as options nos selects de formas de pagamento e de categoria
+    function listas(dados) {
+      formasPgEncontradas = dados.formasDePagamento
+
+      let formasPgDisponiveis = []
+      let tipoTransacao = document.querySelector("input[name='tipo']:checked").id
+      if (tipoTransacao == "credito") formasPgDisponiveis = dados.formasDePagamento.filter(formaPg => formaPg[1] == "Crédito")
+      else formasPgDisponiveis = dados.formasDePagamento.filter(formaPg => formaPg[1] !== "Crédito")
+
+      let contas = document.querySelector("#conta")
+      contas.innerHTML = '<option selected disabled>Selecione uma opção</option>'
+      formasPgDisponiveis.forEach(formaPg => contas.innerHTML += `<option>${formaPg[0]}</option>`)
+
+      let categorias = document.querySelector("#categoria")
+      categorias.innerHTML = '<option selected disabled>Selecione uma opção</option>'
+      dados.categorias.forEach(categoria => categorias.innerHTML += `<option>${categoria}</option>`)
+    }
+
+    //Função executa ao alterar a categoria
+    let categoria = document.querySelector("#categoria")
+    categoria.addEventListener("change", event => {
+      let contaFixa = document.querySelector("#contaFixa")
+      let valor = document.querySelector("#valor")
+      let tipo = document.querySelector("input[name='tipo']:checked")?.id
+
+      //Caso seja uma transação de debito e pagamento de contas fixas, o select é exibido
+      if (event.target.value == "Contas Fixas" && tipo == "debito") {
+        contaFixa.parentElement.classList.remove("oculto")
+        valor.parentElement.classList.remove("col-md-12")
+        valor.parentElement.classList.add("col-md-6")
+        google.script.run.withSuccessHandler(listasContasFixas).getContasFixas()
+      } 
+      //Caso não seja a condição anterior mas seja uma transação de crédito, manter 6 colunas para o campo valor
+      else if (tipo == "credito") {
+        contaFixa.parentElement.classList.add("oculto")
+        valor.parentElement.classList.remove("col-md-12")
+        valor.parentElement.classList.add("col-md-6")
+      }
+      else {
+        contaFixa.parentElement.classList.add("oculto")
+        valor.parentElement.classList.remove("col-md-6")
+        valor.parentElement.classList.add("col-md-12")
+      }
+    })
+
+    //Função cria as options do select contas fixas e armazena os resultados em uma variavel
+    var contaFixa = document.querySelector("#contaFixa")
+    var contasFixas = []
+    function listasContasFixas(dados) {
+      contasFixas = dados
+      contaFixa.innerHTML = '<option selected disabled>Selecione uma opção</option>'
+      dados.forEach(dado => contaFixa.innerHTML += `<option>${dado.nome}</option>`)
+    }
+
+    //Ao alterar o select conta fixa, o valor que esta registrado na planilha é colocado no input valor
+    contaFixa.addEventListener("change", event => {
+      let conta = contasFixas.find(dado => dado.nome == event.target.value)
+      document.querySelector("#valor").value = conta ? conta.valor : 0
+    })
+
+    //Função executa ao submeter o formulario
+    var form = document.querySelector("form")
+    form.addEventListener("submit", event => {
+      //Previne comportamento padrão
+      event.preventDefault()
+
+      //Puxa os dados do formulario
+      var dataTransacao = document.querySelector("#data").value.split("-").reverse().join("/")
+      var tipoTransacao = document.querySelector("input[name='tipo']:checked")?.id
+      var formaDePagamento = document.querySelector("#conta").value
+      var tipoPagamento = formasPgEncontradas.find(formaPg => formaPg[0] == formaDePagamento)[1]
+      var categoria = document.querySelector("#categoria").value
+      var valor = Number(document.querySelector("#valor").value)
+      var detalhes = document.querySelector("#detalhes").value
+
+      //Cria array de respostas no formato que o Google Sheets precisa, um array de arrays [[...]]
+      var respostas = [[
+        dataTransacao,
+        tipoTransacao,
+        formaDePagamento,
+        tipoPagamento,
+        categoria,
+        valor,
+        detalhes
+      ]]
+
+      //Validações que não são possiveis com HTML required
+      if (!tipoTransacao) {
+        alert("Selecione o tipo da transação")
+        return
+      } else if (formaDePagamento == "Selecione uma opção") {
+        alert("Selecione uma Forma de Pagamento/Conta")
+        return
+      } else if (categoria == "Selecione uma opção") {
+        alert("Selecione a categoria da transação")
+        return
+      }
+
+      //Caso seja uma transação de crédito é necessário criar um array (linha) para cada parcela restante
+      if (tipoTransacao == "credito") {
+        let conta = formasPgEncontradas.find(formaPg => formaPg[0] == formaDePagamento)
+        let fechamento = conta[2]
+        let vencimento = conta[3]
+
+        let parcelaAtual = Number(document.querySelector("#parcelaAtual").value)
+        let totalParcelas = Number(document.querySelector("#totalParcelas").value)
+        let novasRespostas = []
+
+        //Executa loop com contador sendo iniciado na parcela atual e finalizado no total de parcelas
+        for (let i=parcelaAtual; i<=totalParcelas ; i++) {
+          let vencimentoTransacao = generateVencimento(fechamento,vencimento,i)
+          novasRespostas.push([
+            ...respostas[0],
+            i + "/" + totalParcelas,
+            vencimentoTransacao
+          ])
+        }
+
+        respostas = novasRespostas
+      }
+
+      //A função do apps scripts é acionada e com callbacks de successo e de erro
+      console.log(respostas)
+      google.script.run
+        .withSuccessHandler(sucesso)
+        .withFailureHandler(erro)
+        .novaTransacao(respostas)
+    })
+
+    //Callback de sucesso
+    function sucesso() {
+      alert("Registro concluido!")
+      form.reset()
+    }
+
+    //Callback de erro
+    function erro(error) {
+      console.log(error.message)
+      alert("Erro ao salvar!")
+    }
+
+    //Função gera o vencimento da transação de crédito
+    function generateVencimento(fechamento,vencimento,mes) {
+      let hoje = new Date().toLocaleDateString("pt-br", {timeZone: "America/Sao_Paulo"})
+      let hojeSplit = hoje.split("/")
+      let ano = Number(hojeSplit[2])
+      let mesVencimento = Number(hojeSplit[1])
+      mesVencimento += (mes-1)
+
+      if (Number(hojeSplit[0]) > fechamento) mesVencimento++
+      
+      if (mesVencimento > 12) {
+        ano++
+        mesVencimento -= 12
+      }
+
+      const needZero = number => number < 10 ? "0"+number : number
+      return `${needZero(vencimento)}/${needZero(mesVencimento)}/${ano}`
+    }
+
+
+  </script>
+
+</body>
+
+</html>
